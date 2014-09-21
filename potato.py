@@ -91,10 +91,10 @@ while True: # the main game loop
                 potatohero.scream()
                 potatodirection = 1
 
-        if (event.type == KEYDOWN and event.key == K_RIGHT):
+        if (event.type == KEYDOWN and event.key == K_d):
             backgroundDirection = -1
 
-        if (event.type == KEYUP and event.key == K_RIGHT):
+        if (event.type == KEYUP and event.key == K_d):
             backgroundDirection = 0
 
     allsprites.clear(screen, background)
