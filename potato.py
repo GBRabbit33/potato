@@ -62,13 +62,27 @@ class Potato(pygame.sprite.Sprite):
     def isbottom(self):
         return self.rect.center[1] >= self.originaly
 
+class Shelf(pygame.sprite.Sprite):
+    shelfImage = pygame.image.load('shelf.png').convert_alpha()
+
+    def __init__(self, x, y):
+        pygame.sprite.Sprite.__init__(self,
+                              self.groups) 
+        self.image = self.shelfImage 
+        self.rect = self.image.get_rect()
+        self.rect.center = (x, y)
+
+
 allsprites = pygame.sprite.Group()
 Potato.groups = allsprites
+Shelf.groups = allsprites
 
 potatohero = Potato(screenwidth/2, (screenheight-potatoheight))
 potatodirection = 0
 backgroundOffset = 0
 backgroundDirection = 0
+
+shelf1 = Shelf(screenwidth/2, screenheight/2);
 
 while True: # the main game loop
     potatohero.move(potatodirection * 20)
