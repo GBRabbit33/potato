@@ -35,9 +35,10 @@ class Potato(pygame.sprite.Sprite):
                               self.groups) 
         self.potatox = x
         self.potatoy = y
-        self.originaly = y
+        self.lastpotatoy = y
+        self.standingy = y
         self.jumpHeight = 0
-        self.jumpMaxHeight = 300.0
+        self.jumpMaxHeight = 350.0
         self.image = self.normalPotato 
         self.rect = self.image.get_rect()
         self.rect.center = (self.potatox, self.potatoy)
@@ -47,8 +48,13 @@ class Potato(pygame.sprite.Sprite):
         self.calculatePosition()
 
     def calculatePosition(self):
-        self.potatoy = self.originaly - math.sin(self.jumpHeight/self.jumpMaxHeight*math.pi)*self.jumpMaxHeight;
+        self.lastpotatoy = self.potatoy
+        self.potatoy = self.standingy - math.sin(self.jumpHeight/self.jumpMaxHeight*math.pi)*self.jumpMaxHeight;
+        self.potatoy = min(self.standingy, self.potatoy)
         self.rect.center = (self.potatox, self.potatoy)
+
+    def getDirection(self):
+        return self.lastpotatoy - self.potatoy
 
     def scream(self):
         self.soundJump.play()
@@ -60,7 +66,10 @@ class Potato(pygame.sprite.Sprite):
         self.calculatePosition()
     
     def isbottom(self):
-        return self.rect.center[1] >= self.originaly
+        return self.rect.center[1] >= self.standingy
+
+    def setStandingY(self, standingy):
+        self.standingy = standingy
 
 class Shelf(pygame.sprite.Sprite):
     shelfImage = pygame.image.load('shelf.png').convert_alpha()
@@ -69,25 +78,41 @@ class Shelf(pygame.sprite.Sprite):
         pygame.sprite.Sprite.__init__(self,
                               self.groups) 
         self.image = self.shelfImage 
+        self.shelfx = x 
+        self.shelfy = y 
         self.rect = self.image.get_rect()
         self.rect.center = (x, y)
 
+    def offset(self, offset):
+        self.rect.center = (self.shelfx + offset, self.shelfy)
+
 
 allsprites = pygame.sprite.Group()
+shelfs = pygame.sprite.Group()
+
 Potato.groups = allsprites
-Shelf.groups = allsprites
+Shelf.groups = allsprites, shelfs
 
 potatohero = Potato(screenwidth/2, (screenheight-potatoheight))
 potatodirection = 0
-backgroundOffset = 0
-backgroundDirection = 0
+offset = 0
+direction = 0
 
-shelf1 = Shelf(screenwidth/2, screenheight/2);
+shelf1 = Shelf(screenwidth * 1.5, screenheight/2);
 
 while True: # the main game loop
+    hitshelfs = pygame.sprite.spritecollide(potatohero, shelfs, False)
+    for hitself in hitshelfs:
+        jumpdirection = potatohero.getDirection()
+        if jumpdirection > 0:
+            print "Fejbeveres"
+        else:
+            potatohero.setStandingY(hitself.rect.top + hitself.rect.height/2 - potatohero.rect.height/2)
+
     potatohero.move(potatodirection * 20)
-    backgroundOffset = backgroundOffset + (backgroundDirection*10)
-    backgroundOffset = backgroundOffset % (-backgroundwidth)
+    offset = offset + (direction*10)
+    offset = min(0, offset)
+    backgroundOffset = offset % (-backgroundwidth)
 
     if potatohero.isbottom(): 
          potatodirection = 0
@@ -106,14 +131,21 @@ while True: # the main game loop
                 potatodirection = 1
 
         if (event.type == KEYDOWN and event.key == K_d):
-            backgroundDirection = -1
+            direction = -1
 
         if (event.type == KEYUP and event.key == K_d):
-            backgroundDirection = 0
+            direction = 0
+
+        if (event.type == KEYDOWN and event.key == K_a):
+            direction = 1
+
+        if (event.type == KEYUP and event.key == K_a):
+            direction = 0
 
     allsprites.clear(screen, background)
     screen.blit(background_image, [backgroundOffset, 0])
     screen.blit(background_image, [backgroundOffset+backgroundwidth, 0])
+    shelf1.offset(offset)
     allsprites.draw(screen)
     pygame.display.flip()
     fpsClock.tick(FPS)
